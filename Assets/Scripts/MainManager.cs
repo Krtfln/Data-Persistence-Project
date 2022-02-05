@@ -11,17 +11,32 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text bestScoreText;
+    public Text bestScoresListText;
+    public Text startText;
     public GameObject GameOverText;
-    
+    public Button backToMenuButton;
+
+
     private bool m_Started = false;
     private int m_Points;
     
     private bool m_GameOver = false;
 
+    //public Button backToMenuButton;
+
     
     // Start is called before the first frame update
     void Start()
     {
+        if (DataPersistence.Instance.bestScores != null) {
+            DataPersistence.Instance.bestScores.Sort((x, y) => y.scores.CompareTo(x.scores));
+            DataPersistence.PlayerBestScores playerBestScores = DataPersistence.Instance.bestScores[0];
+            bestScoreText.text = "Best Score: " + playerBestScores.playerName + " " + playerBestScores.scores;
+        }
+
+        ScoreText.text = DataPersistence.Instance.playerName + " score: 0";
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -51,6 +66,9 @@ public class MainManager : MonoBehaviour
 
                 Ball.transform.SetParent(null);
                 Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
+
+                startText.gameObject.SetActive(false);
+                backToMenuButton.gameObject.SetActive(false);
             }
         }
         else if (m_GameOver)
@@ -62,15 +80,36 @@ public class MainManager : MonoBehaviour
         }
     }
 
+    
+
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = DataPersistence.Instance.playerName + " score: " + m_Points;
     }
 
     public void GameOver()
     {
+        Debug.Log("GameOver Invoked!");
         m_GameOver = true;
         GameOverText.SetActive(true);
+        backToMenuButton.gameObject.SetActive(true);
+        DataPersistence.Instance.SaveBestScores(m_Points);
+
+        DataPersistence.Instance.bestScores.Sort((x, y) => y.scores.CompareTo(x.scores));
+        string bestScoresText = "";
+
+        foreach (var best in DataPersistence.Instance.bestScores)
+        {
+            bestScoresText += best.playerName + " " + best.scores + "\n";
+        }
+
+        Debug.Log(bestScoresText);
+        bestScoresListText.text = bestScoresText;
+        DataPersistence.PlayerBestScores playerBestScores = DataPersistence.Instance.bestScores[0];
+        bestScoreText.text = "Best Score: " + playerBestScores.playerName + " " + playerBestScores.scores;
+
     }
+
+    
 }
